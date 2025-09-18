@@ -8,43 +8,210 @@
 <link href='https://fonts.googleapis.com/css?family=Hind:300' rel='stylesheet' type='text/css'>
 <link href='https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300' rel='stylesheet' type='text/css'>
   
+  <style>
+    :root {
+      --bg: #0b1220;
+      --card: #0f1a2e;
+      --card-2: #14223b;
+      --primary: #2f6fff;
+      --primary-600: #275ee0;
+      --text: #e6eefc;
+      --muted: #a9b6d9;
+      --field: #0d1a33;
+      --field-border: #21335a;
+      --success: #20c997;
+      --error: #ff6b6b;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 800px at 10% 10%, #0e1830 0%, #0b1220 60%), #0b1220;
+      color: var(--text);
+      font-family: 'Arimo', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      width: 100%;
+      max-width: 760px;
+      background: linear-gradient(180deg, var(--card) 0%, var(--card-2) 100%);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04);
+      overflow: hidden;
+    }
+    .header {
+      padding: 24px 28px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), #5b9bff);
+      display: inline-flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 700;
+      box-shadow: 0 6px 18px rgba(47,111,255,0.35);
+    }
+    .title {
+      font-weight: 700; letter-spacing: 0.2px; font-size: 20px;
+    }
+    .subtitle { color: var(--muted); font-size: 13px; margin-top: 2px; }
+    .content { padding: 22px 28px 26px; }
+    form { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .field { display: grid; gap: 8px; }
+    label { color: var(--muted); font-size: 12px; letter-spacing: 0.3px; }
+    input, select {
+      width: 100%;
+      background: var(--field);
+      color: var(--text);
+      border: 1px solid var(--field-border);
+      border-radius: 10px;
+      padding: 12px 12px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    input:focus, select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(47,111,255,0.18);
+    }
+    .row-span { grid-column: span 2; }
+    .actions { display: flex; gap: 12px; margin-top: 6px; }
+    .btn {
+      appearance: none; border: 0; cursor: pointer;
+      background: var(--primary); color: #fff; font-weight: 600;
+      padding: 12px 16px; border-radius: 10px; font-size: 14px;
+      box-shadow: 0 8px 22px rgba(47,111,255,0.35);
+      transition: transform .06s ease, background .2s;
+    }
+    .btn:hover { background: var(--primary-600); }
+    .btn:active { transform: translateY(1px); }
+    .result {
+      margin-top: 18px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: rgba(47,111,255,0.10);
+      border: 1px solid rgba(47,111,255,0.25);
+      color: var(--text);
+      min-height: 24px;
+    }
+    .note { margin-top: 8px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 720px) {
+      form { grid-template-columns: 1fr; }
+      .row-span { grid-column: span 1; }
+    }
+  </style>
 </head>
 
 <body>
- <div class="login">
-	<h1>Salary Predictor</h1>
-	<form method="post" action="/predict">
-	  <div>
-	    <label>Years of Experience</label>
-	    <input type="number" step="0.1" name="years_experience" placeholder="e.g. 3" required>
+ <div class="card">
+   <div class="header">
+     <div class="logo">SP</div>
+     <div>
+       <div class="title">Salary Predictor</div>
+       <div class="subtitle">Estimate base salary (MAD) given profile and role context</div>
+     </div>
+   </div>
+   <div class="content">
+        <form id="salary-form">
+          <div class="field">
+            <label>Years of Experience</label>
+            <input type="number" step="0.1" name="years_experience" placeholder="e.g. 3" required>
+          </div>
+          <div class="field">
+            <label>Role</label>
+            <select name="role">
+	      <option>bi engineer</option>
+	      <option>product manager</option>
+	      <option>data scientist</option>
+	      <option>data analyst</option>
+	      <option>qa engineer</option>
+	      <option>backend developer</option>
+	      <option>data engineer</option>
+	      <option>frontend developer</option>
+	      <option>devops engineer</option>
+	      <option>ml engineer</option>
+	    </select>
 	  </div>
-	  <div>
-	    <label>Role</label>
-	    <input type="text" name="role" placeholder="e.g. data scientist">
-	  </div>
-	  <div>
+          <div class="field">
 	    <label>Degree</label>
-	    <input type="text" name="degree" placeholder="e.g. bachelor">
+	    <select name="degree">
+	      <option>phd</option>
+	      <option>bachelors</option>
+	      <option>masters</option>
+	      <option>no degree</option>
+	    </select>
 	  </div>
-	  <div>
+          <div class="field">
 	    <label>Company Size</label>
-	    <input type="text" name="company_size" placeholder="e.g. medium">
+	    <select name="company_size">
+	      <option>mid</option>
+	      <option>small</option>
+	      <option>enterprise</option>
+	      <option>large</option>
+	    </select>
 	  </div>
-	  <div>
+          <div class="field">
 	    <label>Location</label>
-	    <input type="text" name="location" placeholder="e.g. casablanca">
+	    <select name="location">
+	      <option>casablanca</option>
+	      <option>fes</option>
+	      <option>rabat</option>
+	      <option>tangier</option>
+	      <option>marrakech</option>
+	      <option>remote</option>
+	      <option>agadir</option>
+	    </select>
 	  </div>
-	  <div>
+          <div class="field">
 	    <label>Level</label>
-	    <input type="text" name="level" placeholder="e.g. junior">
+	    <select name="level">
+	      <option>junior</option>
+	      <option>mid</option>
+	      <option>intern</option>
+	      <option>lead</option>
+	      <option>senior</option>
+	    </select>
 	  </div>
-	  <button type="submit">Predict</button>
+          <div class="actions row-span">
+            <button class="btn" type="submit">Predict</button>
+          </div>
 	</form>
 
-	{% if prediction_text %}
-	  <h2>{{ prediction_text }}</h2>
-	{% endif %}
+        <div id="prediction" class="result"></div>
+        <div class="note">This is a statistical estimate based on your inputs.</div>
 
+        <script>
+	  const form = document.getElementById('salary-form');
+	  const out = document.getElementById('prediction');
+	  form.addEventListener('submit', async (e) => {
+	    e.preventDefault();
+	    const data = Object.fromEntries(new FormData(form).entries());
+	    try {
+	      const res = await fetch('/api/salary/predict', {
+	        method: 'POST',
+	        headers: { 'Content-Type': 'application/json' },
+	        body: JSON.stringify(data)
+	      });
+	      const json = await res.json();
+              if (json.predicted_salary !== undefined) {
+                out.textContent = `Predicted Salary (MAD): ${Number(json.predicted_salary).toLocaleString()}`;
+	      } else if (json.error) {
+	        out.textContent = `Error: ${json.error}`;
+	      } else {
+	        out.textContent = 'Unexpected response';
+	      }
+	    } catch (err) {
+	      out.textContent = 'Network error';
+	    }
+	  });
+        </script>
+   </div>
  </div>
 
 

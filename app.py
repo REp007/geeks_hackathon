@@ -7,7 +7,7 @@ import joblib
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 import re
 
 
@@ -206,6 +206,11 @@ def predict_priority() -> Any:
         return jsonify({"error": str(exc)}), 400
     except Exception:
         return jsonify({"error": "Failed to generate priority prediction"}), 500
+
+
+@app.route("/")
+def index() -> Any:
+    return render_template("index.html")
 
 
 @app.route("/api/resume_screen/predict", methods=["POST"])
