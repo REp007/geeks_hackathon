@@ -3,7 +3,12 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 import pandas as pd
+import joblib
+import numpy as np
+import tensorflow as tf
+from tensorflow import keras
 from flask import Flask, jsonify, request
+import re
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -105,6 +110,75 @@ def _prepare_priority_features(payload: Dict[str, Any]) -> List[Any]:
     return encoded_row
 
 
+"""
+Resume screening assets and helpers
+"""
+
+# Load Keras model and preprocessing artifacts (gracefully handle missing files)
+resume_screen_model = None
+resume_vec = None
+job_vec = None
+svd_resume = None
+svd_job = None
+
+try:
+    resume_screen_model = keras.models.load_model(MODELS_DIR / "resume_screen_model.h5")
+except Exception:
+    resume_screen_model = None
+
+try:
+    resume_vec = joblib.load(ENCODERS_DIR / "resume_vectorizer.pkl")
+except Exception:
+    resume_vec = None
+
+try:
+    job_vec = joblib.load(ENCODERS_DIR / "job_vectorizer.pkl")
+except Exception:
+    job_vec = None
+
+try:
+    svd_resume = joblib.load(ENCODERS_DIR / "resume_svd.pkl")
+except Exception:
+    svd_resume = None
+
+try:
+    svd_job = joblib.load(ENCODERS_DIR / "job_svd.pkl")
+except Exception:
+    svd_job = None
+
+
+def clean_text(text: Any) -> str:
+    if not isinstance(text, str):
+        return ""
+    text = text.lower()
+    text = re.sub(r"\s+", " ", text).strip()
+    text = re.sub(r"\S+@\S+", " ", text)
+    text = re.sub(r"http\S+", " ", text)
+    return text
+
+
+def _prepare_resume_features(payload: Dict[str, Any]) -> np.ndarray:
+    if not all([resume_vec is not None, job_vec is not None, svd_resume is not None, svd_job is not None]):
+        raise ValueError("Resume screening encoders are not fully available")
+    if "resume_text" not in payload or "job_text" not in payload:
+        raise ValueError("Missing 'resume_text' or 'job_text' fields")
+
+    resume_text = clean_text(payload["resume_text"])  # type: ignore[index]
+    job_text = clean_text(payload["job_text"])  # type: ignore[index]
+
+    # TF-IDF transform
+    X_resume = resume_vec.transform([resume_text])
+    X_job = job_vec.transform([job_text])
+
+    # SVD transform
+    X_resume_svd = svd_resume.transform(X_resume)
+    X_job_svd = svd_job.transform(X_job)
+
+    # Combine
+    X_new = np.hstack([X_resume_svd, X_job_svd])
+    return X_new
+
+
 @app.route("/api/salary/predict", methods=["POST"])
 def predict_salary() -> Any:
     try:
@@ -133,6 +207,24 @@ def predict_priority() -> Any:
     except Exception:
         return jsonify({"error": "Failed to generate priority prediction"}), 500
 
+
+@app.route("/api/resume_screen/predict", methods=["POST"])
+def predict_resume_screen() -> Any:
+    try:
+        if resume_screen_model is None:
+            return jsonify({"error": "Resume screening model not available"}), 500
+        payload = _validate_json(request.get_json())
+        X_new = _prepare_resume_features(payload)
+        probs = resume_screen_model.predict(X_new).ravel()
+        preds = (probs >= 0.5).astype(int)
+        return jsonify({
+            "probability": float(probs[0]),
+            "prediction": int(preds[0])
+        })
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception:
+        return jsonify({"error": "Failed to generate resume screening prediction"}), 500
 
 if __name__ == "__main__":
     app.run(port=8000, debug=True)
